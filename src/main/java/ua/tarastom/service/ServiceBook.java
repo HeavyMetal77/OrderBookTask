@@ -20,10 +20,10 @@ public class ServiceBook implements IService {
     @Override
     public void commandLine(String filePath) {
         String resultFile = "result.txt";
-        try(InputStream inputStream = new FileInputStream(filePath);
-            OutputStream outputStream = new FileOutputStream(resultFile);
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream))){
+        try (InputStream inputStream = new FileInputStream(filePath);
+             OutputStream outputStream = new FileOutputStream(resultFile);
+             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+             BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream))) {
 
             ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -33,7 +33,20 @@ public class ServiceBook implements IService {
                 String typeAction = split[0];
                 switch (typeAction) {
                     case "u":
-                        executorService.execute(() -> update(split));
+                        executorService.execute(() -> {
+                            try {
+                                update(split);
+                            } catch (Exception e) {
+                                try {
+                                    bufferedWriter.write(e.getMessage() + "\n");
+                                    bufferedWriter.flush();
+                                } catch (IOException ioException) {
+                                    ioException.printStackTrace();
+                                }
+                            }
+                        });
+//                        Thread.sleep(500);
+//                        System.out.println("update split: " + Arrays.toString(split) + ", " + bookDaoImpl.getBidList());
                         break;
                     case "q":
                         executorService.execute(() -> {
@@ -41,13 +54,33 @@ public class ServiceBook implements IService {
                                 bufferedWriter.write(question(split));
                                 bufferedWriter.flush();
                             } catch (IOException e) {
-                                e.printStackTrace();
-                                e.getCause();
+                                try {
+                                    bufferedWriter.write(e.getMessage()+ "\n");
+                                    bufferedWriter.flush();
+                                } catch (IOException ioException) {
+                                    ioException.printStackTrace();
+                                }
                             }
                         });
+//                        Thread.sleep(500);
+//                        System.out.println("query split: " + Arrays.toString(split) + ", " + bookDaoImpl.getBidList() + "best -" + question(split));
                         break;
                     case "o":
-                        executorService.execute(() -> order(split));
+
+                        executorService.execute(() -> {
+                            try {
+                                order(split);
+                            } catch (Exception e) {
+                                try {
+                                    bufferedWriter.write(e.getMessage()+ "\n");
+                                    bufferedWriter.flush();
+                                } catch (IOException ioException) {
+                                    ioException.printStackTrace();
+                                }
+                            }
+                        });
+//                        Thread.sleep(500);
+//                        System.out.println("order split: " + Arrays.toString(split) + ", " + bookDaoImpl.getBidList());
                         break;
                     default:
                         bufferedWriter.write("Wrong arguments!");
@@ -64,9 +97,16 @@ public class ServiceBook implements IService {
 
     public void update(String[] split) {
         synchronized (this) {
-            int price = Integer.parseInt(split[1]);
-            int size = Integer.parseInt(split[2]);
-            Type convertType = convertType(split[3]);
+            int price;
+            int size;
+            Type convertType;
+            try {
+                price = Integer.parseInt(split[1]);
+                size = Integer.parseInt(split[2]);
+            } catch (Exception e) {
+                throw new RuntimeException("Wrong arguments!");
+            }
+            convertType = convertType(split[3]);
             BidEntity bidEntity = new BidEntity(price, size, convertType);
             bookDaoImpl.updateAction(bidEntity);
         }
@@ -78,12 +118,25 @@ public class ServiceBook implements IService {
             String result;
             int size;
             if (split.length == 3) {
-                size = Integer.parseInt(split[2]);
+                try {
+                    size = Integer.parseInt(split[2]);
+                } catch (Exception e) {
+                    throw new RuntimeException("Wrong arguments!");
+                }
                 BidEntity bidEntity = bookDaoImpl.queryAction(size);
                 result = bidEntity.getSize() + "\n";
             } else if (split.length == 2) {
-                BidEntity bidEntity = bookDaoImpl.queryAction(act);
-                result = bidEntity.getPrice() + "," + bidEntity.getSize() + "\n";
+                BidEntity bidEntity;
+                try {
+                    bidEntity = bookDaoImpl.queryAction(act);
+                } catch (Exception e) {
+                    return e.getMessage();
+                }
+                if (bidEntity != null) {
+                    result = bidEntity.getPrice() + "," + bidEntity.getSize() + "\n";
+                } else {
+                    result = "This item is not currently available.\n";
+                }
             } else {
                 throw new RuntimeException("Wrong arguments!");
             }
@@ -92,9 +145,16 @@ public class ServiceBook implements IService {
     }
 
     private void order(String[] split) {
-        String act = split[1];
-        int value = Integer.parseInt(split[2]);
-        bookDaoImpl.orderAction(act, value);
+        synchronized (this) {
+            String act = split[1];
+            int value;
+            try {
+                value = Integer.parseInt(split[2]);
+            } catch (Exception e) {
+                throw new RuntimeException("Wrong arguments!");
+            }
+            bookDaoImpl.orderAction(act, value);
+        }
     }
 
     @Override

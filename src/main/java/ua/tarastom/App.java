@@ -18,3 +18,8 @@ public class App {
 }
 //ArrayList 17905
 //LinkedList 18046
+
+//15854 collect 16017 16009 16411 15909 15795 16805 15903 16413 15580
+
+//17136 collect
+//15680 point
