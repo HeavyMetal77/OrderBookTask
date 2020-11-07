@@ -1,11 +1,11 @@
 package ua.tarastom.entity;
 
-public class BidEntity {
+public class BidEntity implements Comparable<BidEntity> {
     private int price;
     private int size;
     private Type type;
 
-    public BidEntity(int price, int size,  Type type){
+    public BidEntity (int price, int size,  Type type){
         this.price = price;
         this.size = size;
         this.type = type;
@@ -39,5 +39,10 @@ public class BidEntity {
     @Override
     public String toString() {
         return "{" + price + ", " + size + ", " + type + '}';
+    }
+
+    @Override
+    public int compareTo(BidEntity anotherEntity) {
+        return this.getPrice()- anotherEntity.getPrice();
     }
 }

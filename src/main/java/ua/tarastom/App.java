@@ -11,15 +11,14 @@ public class App {
     public static void main(String[] args) {
         long start = System.currentTimeMillis();
         IService serviceBook = new ServiceBook(new BookDaoImpl(new Book()));
-        serviceBook.commandLine("test.txt");
+        serviceBook.commandLine("test.txt", "result.txt");
         long end = System.currentTimeMillis();
         System.out.println(end-start);
     }
 }
-//ArrayList 17905
-//LinkedList 18046
+//2369 2345
+//2299 2274 2326 2477 2331 2370
 
-//15854 collect 16017 16009 16411 15909 15795 16805 15903 16413 15580
+//3219 3330 2385
 
-//17136 collect
-//15680 point
+//2442 2358 2382 2366 2308 2320 2268 2360 2318 2310 2330 2324 2285 2310 2204 2246 2293

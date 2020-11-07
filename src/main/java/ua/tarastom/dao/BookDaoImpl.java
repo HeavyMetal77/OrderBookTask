@@ -2,11 +2,10 @@ package ua.tarastom.dao;
 
 import ua.tarastom.entity.BidEntity;
 import ua.tarastom.entity.Book;
-import ua.tarastom.entity.PriceComparator;
 import ua.tarastom.entity.Type;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 public class BookDaoImpl implements IBookDao {
     private final List<BidEntity> bidList;
@@ -17,54 +16,33 @@ public class BookDaoImpl implements IBookDao {
 
     @Override
     public void updateAction(BidEntity bidEntity) {
-        boolean flag = true;
-        for (BidEntity entity : bidList) {
-            if (entity.getPrice() == bidEntity.getPrice()) {
-                entity.setSize(entity.getSize() + bidEntity.getSize());
-                entity.setType(bidEntity.getType());
-                flag = false;
-                break;
-            }
-        }
-        if (flag) {
-            bidList.add(bidEntity);
-            bidList.sort(new PriceComparator());
-        }
-        checkSpreadToAskOrBid();
-    }
-
-    private void checkSpreadToAskOrBid() {
-        for (int i = 0; i < bidList.size(); i++) {
-            BidEntity bidCurrentEntity = bidList.get(i);
-            if (bidCurrentEntity.getType().equals(Type.Spread)
-                    && i < bidList.indexOf(getBestAskBidEntity())
-                    && bidCurrentEntity.getSize()>0) {
-                bidCurrentEntity.setType(Type.Ask);
-            }
-            if (bidCurrentEntity.getType().equals(Type.Spread)
-                    && i > bidList.indexOf(getBestBidEntity())
-                    && bidCurrentEntity.getSize()>0) {
-                bidCurrentEntity.setType(Type.Bid);
-            }
+        int i = Collections.binarySearch(bidList, bidEntity);
+        if (i >= 0) {
+            BidEntity entity = bidList.get(i);
+            entity.setSize(entity.getSize() + bidEntity.getSize());
+        } else {
+            bidList.add(-(i + 1), bidEntity);
         }
     }
 
     public BidEntity getBestAskBidEntity() {
-        BidEntity bestAskEntity = null;
-        Optional<BidEntity> max = bidList.stream().filter(e -> e.getType().equals(Type.Ask)).max(new PriceComparator());
-        if (max.isPresent()) {
-            bestAskEntity = max.get();
+//        return bidList.stream().filter(entity -> entity.getType().equals(Type.Ask)).findFirst().orElse(null);
+        for (BidEntity entity : bidList) {
+            if (entity.getType().equals(Type.Ask)) {
+                return entity;
+            }
         }
-        return bestAskEntity;
+        return null;
     }
 
     public BidEntity getBestBidEntity() {
-        BidEntity bestBidEntity = null;
-        Optional<BidEntity> min = bidList.stream().filter(e -> e.getType().equals(Type.Bid)).min(new PriceComparator());
-        if (min.isPresent()) {
-            bestBidEntity = min.get();
+        for (int i = bidList.size() - 1; i >= 0; i--) {
+            BidEntity entity = bidList.get(i);
+            if (entity.getType().equals(Type.Bid)) {
+                return entity;
+            }
         }
-        return bestBidEntity;
+        return null;
     }
 
     @Override
@@ -82,39 +60,30 @@ public class BookDaoImpl implements IBookDao {
 
     @Override
     public BidEntity queryAction(int value) {
-        BidEntity bidEntity = null;
-        for (BidEntity entity : bidList) {
-            if (entity.getPrice() == value) {
-                bidEntity = entity;
-                break;
-            }
+        int i = Collections.binarySearch(bidList, new BidEntity(value, 0, null));
+        if (i >= 0) {
+            return bidList.get(i);
+        } else {
+            return null;
         }
-        if (bidEntity == null) {
-            bidEntity = new BidEntity(value, 0, Type.Spread);
-        }
-        return bidEntity;
     }
 
     @Override
     public void orderAction(String act, int value) {
         if (act.equals("buy")) {
-            BidEntity bestAskBidEntity = getBestAskBidEntity();
-            orderChoiceAction(act, value, bestAskBidEntity);
+            orderChoiceAction(act, value, getBestAskBidEntity());
+        } else if (act.equals("sell")) {
+            orderChoiceAction(act, value, getBestBidEntity());
+        } else {
+            throw new RuntimeException("Wrong arguments!");
         }
-        if (act.equals("sell")) {
-            BidEntity bestBidEntity = getBestBidEntity();
-            orderChoiceAction(act, value, bestBidEntity);
-        }
-        checkSpreadToAskOrBid();
     }
 
     private void orderChoiceAction(String act, int value, BidEntity bestEntity) {
         if (bestEntity != null) {
-            int dif = bestEntity.getSize() - value;
-            action(act, bestEntity, dif);
-        }else {
-            checkSpreadToAskOrBid();
-            throw new RuntimeException("Transaction canceled!");
+            action(act, bestEntity, bestEntity.getSize() - value);
+        } else {
+            throw new RuntimeException("Transaction canceled or partially completed!");
         }
     }
 
@@ -122,13 +91,9 @@ public class BookDaoImpl implements IBookDao {
         if (dif > 0) {
             bestEntity.setSize(dif);
         } else if (dif == 0) {
-            bestEntity.setSize(0);
-            bestEntity.setType(Type.Spread);
-            checkSpreadToAskOrBid();
+            bidList.remove(bestEntity);
         } else {
-            bestEntity.setSize(0);
-            bestEntity.setType(Type.Spread);
-            checkSpreadToAskOrBid();
+            bidList.remove(bestEntity);
             orderAction(act, -dif);
         }
     }
