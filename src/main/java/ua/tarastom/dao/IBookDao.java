@@ -3,6 +3,8 @@ package ua.tarastom.dao;
 import ua.tarastom.entity.BidEntity;
 
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public interface IBookDao {
 
@@ -14,5 +16,7 @@ public interface IBookDao {
 
     void orderAction(String act, int value);
 
-    List<BidEntity> getBidList();
+    TreeSet<BidEntity> getBidList();
+
+    TreeSet<BidEntity> getAskList();
 }

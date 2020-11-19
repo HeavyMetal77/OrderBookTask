@@ -1,23 +1,27 @@
 package ua.tarastom.entity;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.TreeSet;
 
 public class Book {
 
-    private final List<BidEntity> bidEntityList;
+    private final TreeSet<BidEntity> bidList;
+    private final TreeSet<BidEntity> askList;
 
     public Book() {
-        bidEntityList = new ArrayList<>();
+        bidList = new TreeSet<>((o1, o2) -> o2.getPrice() - o1.getPrice());
+        askList = new TreeSet<>();
     }
 
-    public List<BidEntity> getBidEntityList() {
-        return bidEntityList;
+    public TreeSet<BidEntity> getAskList() {
+        return askList;
+    }
+
+    public TreeSet<BidEntity> getBidList() {
+        return bidList;
     }
 
     @Override
     public String toString() {
-        return "Book{" + bidEntityList + '}';
+        return "Book{" + bidList + '}';
     }
 }

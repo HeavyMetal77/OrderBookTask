@@ -15,7 +15,6 @@ import static org.junit.Assert.assertEquals;
  * Unit test for simple App.
  */
 public class AppTest {
-    private IBookDao bookDaoImpl;
     private ServiceBook serviceBook;
     BufferedReader bufferedReader;
     String resultFile;
@@ -23,7 +22,7 @@ public class AppTest {
 
     @Before
     public void setUp() {
-        bookDaoImpl = new BookDaoImpl(new Book());
+        IBookDao bookDaoImpl = new BookDaoImpl(new Book());
         serviceBook = new ServiceBook(bookDaoImpl);
         resultFile = "result.txt";
         appTest = "appTest.txt";
@@ -371,5 +370,35 @@ public class AppTest {
         //then
         assertEquals("Transaction canceled or partially completed!\n" +
                 "Transaction canceled or partially completed!\n", resultTestData().toString());
+    }
+
+    @Test
+    public void testServiceQueryAction() {
+        //given
+        initTestData("u,9,1,bid\n" +
+                "u,11,5,ask\n" +
+                "u,13,4,ask\n" +
+                "u,14,6,ask\n" +
+                "u,7,5,bid\n" +
+                "u,9,4,bid\n" +
+                "u,10,2,bid\n" +
+                "q,size,12\n" +
+                "q,size,10\n" +
+                "q,size,9\n" +
+                "q,size,11\n" +
+                "q,best_bid\n" +
+                "q,best_ask\n"
+        );
+
+        //when
+        serviceBook.commandLine(appTest, resultFile);
+
+        //then
+        assertEquals("0\n" +
+                "2\n" +
+                "5\n" +
+                "5\n" +
+                "10,2\n" +
+                "11,5\n", resultTestData().toString());
     }
 }

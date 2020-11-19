@@ -10,7 +10,7 @@ public class GenerateTestData {
 
     public static void main(String[] args) throws IOException {
         BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File("test.txt"))));
-        for (int i = 0; i < 1000000; i++) {
+        for (int i = 0; i < 1_000_000; i++) {
             bufferedWriter.write(randomOperationString() + "\n");
             bufferedWriter.flush();
         }

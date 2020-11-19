@@ -5,7 +5,6 @@ import ua.tarastom.entity.BidEntity;
 import ua.tarastom.entity.Type;
 
 import java.io.*;
-import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -25,7 +24,6 @@ public class ServiceBook implements IService {
              BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream))) {
 
             ExecutorService executorService = Executors.newSingleThreadExecutor();
-
             String command;
             while ((command = bufferedReader.readLine()) != null) {
                 String[] split = command.split(",");
@@ -43,8 +41,6 @@ public class ServiceBook implements IService {
                                 }
                             }
                         });
-//                        Thread.sleep(300);
-//                        System.out.println("update: " + Arrays.toString(split)+ bookDaoImpl.getBidList());
                         break;
                     case "q":
                         executorService.execute(() -> {
@@ -60,8 +56,6 @@ public class ServiceBook implements IService {
                                 }
                             }
                         });
-//                        Thread.sleep(300);
-//                        System.out.println("question: " + Arrays.toString(split)+ bookDaoImpl.getBidList() + " best: " + question(split));
                         break;
                     case "o":
                         executorService.execute(() -> {
@@ -76,8 +70,6 @@ public class ServiceBook implements IService {
                                 }
                             }
                         });
-//                        Thread.sleep(300);
-//                        System.out.println("order: " + Arrays.toString(split)+ bookDaoImpl.getBidList());
                         break;
                     default:
                         bufferedWriter.write("Wrong arguments!");
@@ -93,6 +85,7 @@ public class ServiceBook implements IService {
     }
 
     public void update(String[] split) {
+
         synchronized (this) {
             int price, size;
             try {
@@ -168,10 +161,6 @@ public class ServiceBook implements IService {
         }
         if (type.equals("bid")) {
             theType = Type.Bid;
-            return theType;
-        }
-        if (type.equals("spread")) {
-            theType = Type.Spread;
             return theType;
         }
         return null;
